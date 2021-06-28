@@ -7,4 +7,5 @@ dag*
 *.txt
 trace
 results*
-rep tl
+rep
+tl
