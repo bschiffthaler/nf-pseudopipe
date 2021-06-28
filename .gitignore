@@ -1,0 +1,8 @@
+work*
+.nextflow*
+data/*
+dag*
+*.fasta
+*.html
+*.txt
+trace
