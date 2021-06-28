@@ -6,3 +6,5 @@ dag*
 *.html
 *.txt
 trace
+results*
+rep tl
