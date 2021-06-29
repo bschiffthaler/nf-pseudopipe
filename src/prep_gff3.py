@@ -6,12 +6,6 @@ if __name__ == "__main__":
 
     d = defaultdict(list)
 
-    allow = set()
-
-    with open(argv[2], "r") as in_f:
-        for line in in_f:
-            allow.add(line.strip())
-
     with open(argv[1], "r") as in_f:
         for line in in_f:
             fields = line.strip().split()
@@ -34,8 +28,6 @@ if __name__ == "__main__":
     os.makedirs("exlocs")
 
     for key in d:
-        if not key in allow:
-            continue
         with open(f"exlocs/{key}_exLocs", "w") as out:
             for loc in d[key]:
                 out.write(f"0\t0\t{loc[0]}\t{loc[1]}\t0\t0\t0\t0\t0\n")

@@ -46,23 +46,16 @@ class FASTAFile(object):
 
 if __name__ == "__main__":
 
-    allow = set()
-
-    with open(argv[2], "r") as in_f:
-        for line in in_f:
-            allow.add(line.strip())
-
     fasta = FASTAFile(argv[1])
 
     os.makedirs("split_out")
 
     for name, seq in fasta:
         print(f"Reading {name}")
-        if name in allow:
-            ostr = f"split_out/{name}.fa"
-            with open(ostr, "w") as out:
-                out.write(">")
-                out.write(name)
-                out.write("\n")
-                out.write(seq)
-                out.write("\n")
+        ostr = f"split_out/{name}.fa"
+        with open(ostr, "w") as out:
+            out.write(">")
+            out.write(name)
+            out.write("\n")
+            out.write(seq)
+            out.write("\n")

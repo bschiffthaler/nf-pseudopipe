@@ -7,7 +7,6 @@ process prep_gff {
   input:
   path script
   path gff
-  path allowlist
 
   output:
   path "exlocs"
@@ -15,7 +14,7 @@ process prep_gff {
   script:
 
   """
-  python ${script} ${gff} ${allowlist}
+  python ${script} ${gff}
   """
 }
 
@@ -43,7 +42,6 @@ process prep_fasta {
   input:
   path script
   path fasta
-  path allowlist
 
   output:
   path "split_out"
@@ -51,7 +49,7 @@ process prep_fasta {
   script:
 
   """
-  python ${script} ${fasta} ${allowlist}
+  python ${script} ${fasta}
   """
 }
 
