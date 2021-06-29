@@ -14,7 +14,7 @@ if __name__ == "__main__":
                 continue
             # skip non exon lines
             t = fields[2]
-            if t != "exon":
+            if t != "exon" and t != "CDS":
                 continue
             c = fields[0].replace(">", "").split()[0]
             a = fields[3]
