@@ -8,6 +8,7 @@ class FASTAFile(object):
         super(FASTAFile, self).__init__()
         self.path = path
         self.linebuffer = ""
+        self.eof = False
 
         self.__open__()
 
@@ -18,11 +19,10 @@ class FASTAFile(object):
         return self
 
     def __next__(self):
-        line = self.handle.readline()
-        if not line:
+        if self.eof:
             raise StopIteration
 
-        cur_id = line.strip() if not self.linebuffer else self.linebuffer
+        cur_id = self.handle.readline().strip() if not self.linebuffer else self.linebuffer
         cur_id = cur_id.replace(">", "").split()[0]
         cur_seq = ""
 
@@ -30,10 +30,11 @@ class FASTAFile(object):
             line = self.handle.readline()
             # Eof
             if not line:
+                self.eof = True
                 break
             # Next record
             if line.startswith(">"):
-                self.linebuffer = line
+                self.linebuffer = line.strip()
                 break
             line = line.strip()
             # Empty line
