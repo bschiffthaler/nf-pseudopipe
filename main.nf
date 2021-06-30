@@ -35,6 +35,23 @@ process index_fasta {
   """
 }
 
+process index_fasta_plus {
+  container "bschiffthaler/ncbi-blast:2.11.0"
+  cpus 1
+
+  input:
+  path fasta_mask
+
+  output:
+  path "*.{ndb,nhr,nin,not,nsq,ntf,nto}", emit: index
+
+  script:
+
+  """
+  makeblastdb -in ${fasta_mask} -dbtype nucl
+  """
+}
+
 process prep_fasta {
   container "bschiffthaler/python:3.9"
   cpus 1
@@ -79,18 +96,47 @@ process blast {
 
   input:
   path fasta_mask
-  tuple path(nhr), path(nin), path(nsd), path(nsi), path(nsq)
+  path indexfiles
   path split
 
   output:
   path "split*"
 
   script:
+  _opts = params.blast_opts.join(" ")
 
   """
   sp=\$(basename ${split})
-  blastall -p tblastn -m 8 -z 3.1e9 -e .1 \
+  blastall -p tblastn ${_opts} -m 8 \
     -d ${fasta_mask} -i ${split} -o \${sp}.Out \
+    >\${sp}.Status 2>&1
+  n=\$(echo \$sp | cut -d . -f 2)
+  o=\$(printf "%04d" \$n)
+  mv \${sp}.Out split\${o}.Out
+  mv \${sp}.Status split\${o}.Status
+  cat ${split} > split\${o}
+  """
+}
+
+process blast_plus {
+  container "bschiffthaler/ncbi-blast:2.11.0"
+  cpus params.blast_cpus
+  time "${params.blast_time}"
+
+  input:
+  path fasta_mask
+  path indexfiles
+  path split
+
+  output:
+  path "split*"
+
+  script:
+  _opts = params.blast_opts.join(" ")
+  """
+  sp=\$(basename ${split})
+  tblastn ${_opts} -outfmt 6 -num_threads ${params.blast_cpus} \
+    -db ${fasta_mask} -query ${split} -out \${sp}.Out \
     >\${sp}.Status 2>&1
   n=\$(echo \$sp | cut -d . -f 2)
   o=\$(printf "%04d" \$n)
@@ -107,7 +153,7 @@ process pseudopipe {
 
   input:
   path fasta_mask
-  tuple path(nhr), path(nin), path(nsd), path(nsi), path(nsq)
+  path indexfiles
   path fasta_protein
   path fasta_chr
   path exlocs
@@ -134,16 +180,23 @@ workflow {
   splits = Channel.fromPath(params.fasta_protein)
   .splitFasta(by: params.splitN, file: "split")
 
-  prep_gff("${baseDir}/src/prep_gff3.py", params.gff, params.allowlist)
-  prep_fasta("${baseDir}/src/prep_fasta.py", params.fasta_nomask, params.allowlist)
-  index_fasta(params.fasta_mask)
-  blast(params.fasta_mask, index_fasta.out.index, splits)
+  prep_gff("${baseDir}/src/prep_gff3.py", params.gff)
+  prep_fasta("${baseDir}/src/prep_fasta.py", params.fasta_nomask)
 
-  blasts = blast.out.collect()
-
-  prep_ppipe_out("${baseDir}/src/prep_ppipe_out.sh", blasts)
-
-  pseudopipe(params.fasta_mask, index_fasta.out.index, params.fasta_protein,
-    prep_fasta.out, prep_gff.out, prep_ppipe_out.out)
+  if (params.blast_version == "legacy") {
+      index_fasta(params.fasta_mask)
+      blast(params.fasta_mask, index_fasta.out.index, splits)
+      blasts = blast.out.collect()
+      prep_ppipe_out("${baseDir}/src/prep_ppipe_out.sh", blasts)
+      pseudopipe(params.fasta_mask, index_fasta.out.index, params.fasta_protein,
+        prep_fasta.out, prep_gff.out, prep_ppipe_out.out)
+    } else {
+      index_fasta_plus(params.fasta_mask)
+      blast_plus(params.fasta_mask, index_fasta_plus.out.index, splits)
+      blasts = blast_plus.out.collect()
+      prep_ppipe_out("${baseDir}/src/prep_ppipe_out.sh", blasts)
+      pseudopipe(params.fasta_mask, index_fasta_plus.out.index, params.fasta_protein,
+        prep_fasta.out, prep_gff.out, prep_ppipe_out.out)
+    }
 
 }
