@@ -15,6 +15,10 @@ process prep_gff {
 
   """
   python ${script} ${gff}
+  for f in exlocs/*_exLocs; do
+    sort -k3n -k4n \$f > tmp
+    mv tmp \$f
+  done
   """
 }
 
@@ -169,9 +173,9 @@ process pseudopipe {
   /usr/local/bin/pseudopipe/bin/pseudopipe.sh \
     \${RP}/out \
     \${RP}/${fasta_mask} \
-    \${RP}/${fasta_chr}/%s.fa \
+    \${RP}/${fasta_chr} \
     \${RP}/${fasta_protein} \
-    \${RP}/${exlocs}/%s_exLocs \
+    \${RP}/${exlocs} \
     0
   """
 }
