@@ -1,13 +1,11 @@
 work*
 .nextflow*
 data/*
-dag*
 *.fasta
 *.html
 *.txt
-trace
+*.dot
+*.svg
 results*
-rep
-tl
 test*
 sif*
